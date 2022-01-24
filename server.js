@@ -17,7 +17,6 @@ const broadcast = (msg) => {
 };
 
 net.createServer(function (sock) {
-    sockets.push(sock)
     var state = 0
     var current_key = null    
     sock.on('data', function (data) {
@@ -35,6 +34,7 @@ net.createServer(function (sock) {
                 }else {
                     sock.write("BossHP: " + bossHP + "\n" + "" + current_key + "HP: " + 50)
                 }
+                sockets.push(sock)
                 state = 2
                 break
             case 2:
@@ -43,16 +43,18 @@ net.createServer(function (sock) {
                 if(data == 'ATTACK'){
                     tempBoss -= 10
                     db[current_key] = db[current_key] - 10
-                }else{
-                    sock.write("INVALID")
                 }
                 if(tempBoss != bossHP){
                     bossHP -= 10
                     broadcast("BossHP: " + bossHP + "\n" + "BossATTACK\n" + current_key + "HP: " + db[current_key])
                     
                 }    
-                if(bossHP == 0 || data == 'FLEE' || db[current_key] == 0){
+                if(bossHP == 0){
                     sock.close()
+                    state = 3
+                }
+                if(data == 'FLEE' || db[current_key] == 0){
+                    sock.end()
                     state = 3
                 }
                 break           
